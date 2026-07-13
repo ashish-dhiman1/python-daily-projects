@@ -11,34 +11,43 @@ with DATA_PATH.open("r", encoding="utf-8") as f:
 print(f"Loaded {len(rows)} movies from {DATA_PATH}")
 
 
-def extract_names(json_string):
-    parsed = json.loads(json_string)
-    genres_names=[]
-    for item in parsed:
-        genres_names.append(item['name'])
-    return "|".join(genres_names)
+def extract_names(json_string):                       
+    try:
+        parsed = json.loads(json_string)
+        genres_names=[]
+        for item in parsed:
+            genres_names.append(item['name'])
+        return "|".join(genres_names)
+    except (json.JSONDecodeError, TypeError):
+        return ""
 
-for movie in rows[:30]:
-    genres_names = extract_names(movie['genres'])
-    #print(f"{movie['title']} | {genres_names}")
-
+                                                       
 
 clean_movies=[]
+bad_data_count = 0                                    
 
 for movie in rows:
+    genres = extract_names(movie['genres'])             
+    companies = extract_names(movie['production_companies'])  
+
+    if genres == "" or companies == "":                 
+        bad_data_count += 1                           
+
     clean_data = {
         'title':movie['title'],
-        'genres':extract_names(movie['genres']),
+        'genres': genres,                              
         'original_language':movie['original_language'],
         'budget':movie['budget'],
-        'revenue':movie['revenue'], 
-        'runtime' : movie['runtime'], 
-        'vote_average':movie['vote_average'], 
-        'vote_count':movie['vote_count'], 
+        'revenue':movie['revenue'],
+        'runtime' : movie['runtime'],
+        'vote_average':movie['vote_average'],
+        'vote_count':movie['vote_count'],
         'release_date':movie['release_date'],
-        'production_companies' : extract_names(movie['production_companies'])
+        'production_companies': companies             
     }
     clean_movies.append(clean_data)
 
 for movie in clean_movies[:3]:
     print(movie)
+
+print(f"Processed {len(rows)} movies, {bad_data_count} had missing/bad data") 
